@@ -1,0 +1,108 @@
+{% extends 'base.html' %} 
+{% block styles %}
+<style></style>
+{% endblock %} 
+{% block title %}
+<h2>作業2 帳號可用、作業3 註冊功能</h2>
+{% endblock %} 
+{% block content %}
+<form id="registerForm" method="post" enctype="multipart/form-data">
+  {% csrf_token %}
+  <div class="mb-3">
+    <label for="InputName" class="form-label">姓名</label>
+    <input type="text" class="form-control" id="InputName" name="name" />
+    <!-- 作業2 確認帳號用黃框divName(id="nameHelp") -->
+    <div id="nameHelp" class="alert alert-warning" role="alert"></div>
+
+  <div class="mb-3">
+    <label for="InputEmail" class="form-label">電子郵件</label>
+    <input type="email" class="form-control" id="InputEmail" name="email" />
+  </div>
+
+  <div class="mb-3">
+    <label for="InputPassword" class="form-label">密碼</label>
+    <input type="password" name="Inputpassword" class="form-control" id="InputPassword" />
+  </div>
+
+  <div class="mb-3">
+    <label for="InputPassword1" class="form-label">密碼確認</label>
+    <input type="password" name="Inputpassword1" class="form-control" id="InputPassword1" />
+  </div>
+
+  <div class="mb-3">
+    <label for="InputAge" class="form-label">年紀 (選填)</label>
+    <input type="number" class="form-control" id="InputAge" name="age" min="0" step="1" />
+  </div>
+
+  <div class="mb-3">
+    <label for="formFile" class="form-label">頭像 (選填)</label>
+    <input class="form-control" type="file" id="formFile" name="avatar" accept="image/*"/>
+  </div>
+
+  <button type="submit" class="btn btn-primary" id="buttonSubmit">送出</button>
+</form>
+<!-- 作業三 註冊訊息藍框divInfo(id="div1") -->
+<div id="div1" class="alert alert-info mt-3"></div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const btnSubmit = document.querySelector("#buttonSubmit");
+  const inpName = document.querySelector("#InputName");
+  const divInfo = document.querySelector("#div1");
+  const divName = document.querySelector("#nameHelp");
+
+  // 作業2 確認帳號用黃框divName(id="nameHelp")
+  inpName.addEventListener("blur", async () => {
+    const name = inpName.value;
+
+    // 姓名欄位為空值失焦時，恢復預設 divName 樣式
+    if (!name) { 
+        divName.innerHTML = ""; // 恢復為空值
+        divName.style.color = ""; // 恢復為預設顏色
+        return; // 結束函式，不再進行後續的 fetch 請求
+    }
+
+    // 用fetch發送HTTP請求至指定網址(urls.py接後轉給views.py的check_name函數)
+    const response = await fetch(`/work2_work3_register/api/check_name/?name=${name}`);
+    const result = await response.json(); // views.py的check_name函數會回傳'exists': True or False，及一些操作狀態與伺服器訊息
+    if (result.exists) {
+        divName.innerHTML = "帳號已存在";
+        divName.style.color = "red";
+    } else {
+        divName.innerHTML = "帳號可使用";
+        divName.style.color = "green";
+    }
+});
+
+// 作業三 註冊訊息藍框divInfo(id="div1")
+  btnSubmit.addEventListener("click", async (event) => {
+    event.preventDefault(); // 防止表單的預設行為(送出)，避免刷新頁面
+
+    const myForm = document.querySelector("#registerForm");    
+    const formData = new FormData(myForm);  // 將表單輸入的資料塞進FormData物件中
+
+    // 將表單formData資料傳至urls.py的引導的views.py的register函數
+    const response = await fetch("/work2_work3_register/api/register/", {
+      method: "POST",
+      body: formData,
+      headers: {
+        "X-CSRFToken": "{{ csrf_token }}",
+      },
+    });
+
+    // 等待views.py的register函數回傳資料如：
+    // message: "註冊訊息", status: "error" or "success"
+    const data = await response.json();
+
+    if (data.status === 'error') {
+      divInfo.innerHTML = data.message;
+      divInfo.className = 'alert alert-danger mt-3'; // 收到status:"error"回應時，顯示紅框
+    } else {
+      divInfo.innerHTML = data.message;
+      divInfo.className = 'alert alert-success mt-3'; // 成功時顯示綠框
+    }
+  });
+
+</script>
+{% endblock %}

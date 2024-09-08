@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block styles %}
+<style>
+.card-img-top {
+    width: 100%; /* 圖片寬度填滿div */
+    height: 150px; /* 統一高度 */
+    object-fit: cover; /* 保持圖片比例顯示於中間 */
+}
+</style>
+{% endblock %}
+
+{% block title %}
+<h2>作業1 景點</h2>
+{% endblock %}
+
+{% block content %}
+<div class="row row-cols-1 row-cols-md-3 g-4" id="cards-container">
+  <!-- 插入卡片 -->
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'scripts/travel.js' %}"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // console.log(spots);
+
+    const container = document.getElementById('cards-container');
+
+    // 確保 spots 變數存在並且包含正確的資料
+    if (spots && spots.CommonFormat && spots.CommonFormat.Section) {
+      const cardsHTML = spots.CommonFormat.Section.map(spot => {
+        const { file, stitle, xbody, address } = spot;
+
+        // 取得第一個 img 的 url ，找嘸預設noimg
+        const imgUrl = (file && file.img && file.img.length > 0 ? file.img[0].text : 'https://www.ihecj.jp/wp-content/uploads/2018/01/noimg.png');
+
+
+        return `
+          <div class="col">
+            <div class="card h-100">
+              <img src="${imgUrl}" class="card-img-top" alt="${stitle}照片">
+              <div class="card-body">
+                <h5 class="card-title">${stitle}</h5>
+                <p class="card-text">${xbody.length > 54 ? xbody.substring(0, 54) + '...' : xbody}</p>
+
+              </div>
+              <div class="card-footer">
+                <small class="text-body-secondary">${address}</small>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      // 插入 HTML 到容器中
+      container.innerHTML = cardsHTML;
+    } else {
+      console.error('spots data is not available or has incorrect format.');
+    }
+  });
+</script>
+{% endblock %}
